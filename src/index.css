@@ -79,3 +79,71 @@ label {
 .muted {
   opacity: 0.6;
 }
+
+.tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  border-color: #8886;
+}
+
+.tab.active {
+  border-color: currentColor;
+  font-weight: 600;
+}
+
+.badge {
+  font-size: 0.75rem;
+  min-width: 1.25rem;
+  padding: 0 0.35rem;
+  border-radius: 999px;
+  background: #8884;
+}
+
+section {
+  margin-top: 2rem;
+}
+
+.list-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+  min-height: 2.75rem;
+}
+
+.list-header h2 {
+  margin: 0;
+  font-size: 1.25rem;
+}
+
+.list-header form {
+  flex: 1;
+}
+
+.actions,
+.confirm {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.actions button {
+  font-size: 0.875rem;
+  padding: 0.3rem 0.7rem;
+  border-color: #8886;
+}
+
+.danger {
+  color: #d33;
+}

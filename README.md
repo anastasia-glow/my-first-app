@@ -1,6 +1,6 @@
 # my-first-app
 
-A to-do list app: a React frontend ([Vite](https://vite.dev)), a Python API
+A to-do app with multiple lists: a React frontend ([Vite](https://vite.dev)), a Python API
 ([FastAPI](https://fastapi.tiangolo.com)), and Postgres on [Neon](https://neon.com).
 Hosted on [Render](https://render.com).
 
@@ -30,15 +30,20 @@ The React dev server forwards `/api` requests to the Python API.
 
 ## API
 
-| Method | Path              | Body                  |
-| ------ | ----------------- | --------------------- |
-| GET    | `/api/health`     |                       |
-| GET    | `/api/todos`      |                       |
-| POST   | `/api/todos`      | `{"title": "..."}`    |
-| PATCH  | `/api/todos/{id}` | `{"done": true}`      |
-| DELETE | `/api/todos/{id}` |                       |
+| Method | Path                    | Body                |
+| ------ | ----------------------- | ------------------- |
+| GET    | `/api/health`           |                     |
+| GET    | `/api/lists`            |                     |
+| POST   | `/api/lists`            | `{"name": "..."}`   |
+| PATCH  | `/api/lists/{id}`       | `{"name": "..."}`   |
+| DELETE | `/api/lists/{id}`       |                     |
+| GET    | `/api/lists/{id}/todos` |                     |
+| POST   | `/api/lists/{id}/todos` | `{"title": "..."}`  |
+| PATCH  | `/api/todos/{id}`       | `{"done": true}`    |
+| DELETE | `/api/todos/{id}`       |                     |
 
-The `todos` table is created automatically when the API starts.
+Deleting a list also deletes its to-dos. The `lists` and `todos` tables are created automatically when the API starts;
+to-dos from before lists existed are moved into a list called "My list".
 
 ## Deploy
 
