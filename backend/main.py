@@ -69,7 +69,7 @@ async def lifespan(app: FastAPI):
     pool.close()
 
 
-app = FastAPI(title="my-first-app API", lifespan=lifespan)
+app = FastAPI(title="Anastasiabeauty API", lifespan=lifespan)
 
 
 class ListCreate(BaseModel):

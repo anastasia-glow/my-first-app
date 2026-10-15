@@ -140,7 +140,7 @@ export default function App() {
 
   return (
     <main>
-      <h1>my-first-app</h1>
+      <h1>Anastasiabeauty</h1>
 
       <nav className="tabs">
         {lists.map((list) => (

@@ -1,4 +1,4 @@
-# my-first-app
+# Anastasiabeauty
 
 A to-do app with multiple lists: a React frontend ([Vite](https://vite.dev)), a Python API
 ([FastAPI](https://fastapi.tiangolo.com)), and Postgres on [Neon](https://neon.com).
