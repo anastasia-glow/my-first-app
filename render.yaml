@@ -1,0 +1,17 @@
+# Render Blueprint: one free web service that builds the React app and runs
+# the Python API, which also serves the built app. Postgres is on Neon.
+services:
+  - type: web
+    name: my-first-app
+    runtime: python
+    plan: free
+    buildCommand: npm ci && npm run build && pip install -r backend/requirements.txt
+    startCommand: uvicorn main:app --app-dir backend --host 0.0.0.0 --port $PORT
+    healthCheckPath: /api/health
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.14.3
+      - key: NODE_VERSION
+        value: "24"
+      - key: DATABASE_URL
+        sync: false # you paste Neon's pooled connection string in the Render dashboard

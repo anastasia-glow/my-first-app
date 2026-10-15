@@ -1,0 +1,81 @@
+:root {
+  font-family: system-ui, sans-serif;
+  color-scheme: light dark;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+}
+
+main {
+  width: 100%;
+  max-width: 28rem;
+  padding: 3rem 1rem;
+}
+
+form {
+  display: flex;
+  gap: 0.5rem;
+}
+
+input:not([type='checkbox']) {
+  flex: 1;
+  font: inherit;
+  padding: 0.5rem 0.75rem;
+  border-radius: 8px;
+  border: 1px solid #8886;
+}
+
+button {
+  font: inherit;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  border: 1px solid currentColor;
+  background: transparent;
+  cursor: pointer;
+}
+
+ul {
+  list-style: none;
+  padding: 0;
+}
+
+li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid #8883;
+}
+
+label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.done {
+  text-decoration: line-through;
+  opacity: 0.6;
+}
+
+.delete {
+  border: none;
+  padding: 0.25rem 0.5rem;
+  opacity: 0.5;
+}
+
+.delete:hover {
+  opacity: 1;
+}
+
+.error {
+  color: #d33;
+}
+
+.muted {
+  opacity: 0.6;
+}
