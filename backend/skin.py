@@ -2,6 +2,7 @@
 
 import json
 import os
+import random
 from datetime import date, timedelta
 from typing import Annotated, Literal
 
@@ -169,38 +170,7 @@ def get_client() -> anthropic.Anthropic:
     return _client
 
 
-class AnalyzeRequest(BaseModel):
-    days: int = Field(default=90, ge=MIN_ENTRIES, le=365)
-
-
-@router.get("/analyses/latest")
-def latest_analysis():
-    with pool.connection() as conn:
-        return conn.execute("SELECT * FROM skin_analyses ORDER BY id DESC LIMIT 1").fetchone()
-
-
-@router.post("/analyze", status_code=201)
-def analyze(req: AnalyzeRequest | None = None):
-    if not os.environ.get("ANTHROPIC_API_KEY"):
-        raise HTTPException(503, "Analysis isn't set up: add ANTHROPIC_API_KEY to the server's environment.")
-    days = (req or AnalyzeRequest()).days
-    with pool.connection() as conn:
-        # Count back from the most recent entry, not the server's clock
-        entries = conn.execute(
-            """
-            SELECT * FROM skin_entries
-            WHERE entry_date > (SELECT max(entry_date) FROM skin_entries) - %s::int
-            ORDER BY entry_date
-            """,
-            (days,),
-        ).fetchall()
-    if len(entries) < MIN_ENTRIES:
-        raise HTTPException(
-            400,
-            f"Log at least {MIN_ENTRIES} days to analyze - you have {len(entries)} "
-            f"in the last {days} days.",
-        )
-
+def analyze_with_claude(entries) -> tuple[str, SkinAnalysis]:
     diary = [
         {
             "date": e["entry_date"].isoformat(),
@@ -246,6 +216,93 @@ def analyze(req: AnalyzeRequest | None = None):
     if response.stop_reason == "max_tokens" or response.parsed_output is None:
         raise HTTPException(502, "Claude's analysis came back incomplete. Try again.")
 
+    return response.model, response.parsed_output
+
+
+# Used while no ANTHROPIC_API_KEY is configured: random patterns built from the
+# diary's own product and food names, clearly labelled so nobody mistakes them
+# for a real analysis. Adding the key switches Analyze over to Claude.
+PLACEHOLDER_MODEL = "placeholder"
+
+
+def placeholder_analysis(entries) -> SkinAnalysis:
+    products = sorted({p for e in entries for p in e["morning_products"] + e["evening_products"]})
+    foods = sorted({f.strip() for e in entries for f in e["food"].split(",") if f.strip()})
+    factors = (
+        [(p, "product") for p in random.sample(products, min(2, len(products)))]
+        + [(f, "food") for f in random.sample(foods, min(2, len(foods)))]
+        + [(random.choice(["Under 6 hours of sleep", "8+ hours of sleep"]), "sleep")]
+    )
+    random.shuffle(factors)
+    ratings = [e["rating"] for e in entries]
+    return SkinAnalysis(
+        summary=(
+            "Placeholder results - not a real analysis. These patterns were picked at random "
+            f"from the {len(entries)} entries in your diary to preview how results will look. "
+            "Connect a Claude API key to get a real analysis."
+        ),
+        patterns=[
+            Pattern(
+                factor=factor,
+                kind=kind,
+                effect=random.choice(["better", "worse"]),
+                evidence=(
+                    f"Random placeholder text. Average rating {random.uniform(3, 8):.1f} on "
+                    f"{random.randint(2, max(2, len(entries) // 2))} days with this, vs "
+                    f"{sum(ratings) / len(ratings):.1f} overall (made-up comparison)."
+                ),
+                confidence=random.choice(["low", "medium", "high"]),
+            )
+            for factor, kind in factors
+        ],
+        suggestions=random.sample(
+            [
+                "Placeholder: keep logging every day so patterns have more data.",
+                "Placeholder: note new products on the day you start them.",
+                "Placeholder: try logging what you ate in a bit more detail.",
+                "Placeholder: record stress, weather or your cycle in the notes.",
+            ],
+            k=2,
+        ),
+        caveats="These are randomly generated placeholder results and say nothing about your skin.",
+    )
+
+
+class AnalyzeRequest(BaseModel):
+    days: int = Field(default=90, ge=MIN_ENTRIES, le=365)
+
+
+@router.get("/analyses/latest")
+def latest_analysis():
+    with pool.connection() as conn:
+        return conn.execute("SELECT * FROM skin_analyses ORDER BY id DESC LIMIT 1").fetchone()
+
+
+@router.post("/analyze", status_code=201)
+def analyze(req: AnalyzeRequest | None = None):
+    days = (req or AnalyzeRequest()).days
+    with pool.connection() as conn:
+        # Count back from the most recent entry, not the server's clock
+        entries = conn.execute(
+            """
+            SELECT * FROM skin_entries
+            WHERE entry_date > (SELECT max(entry_date) FROM skin_entries) - %s::int
+            ORDER BY entry_date
+            """,
+            (days,),
+        ).fetchall()
+    if len(entries) < MIN_ENTRIES:
+        raise HTTPException(
+            400,
+            f"Log at least {MIN_ENTRIES} days to analyze - you have {len(entries)} "
+            f"in the last {days} days.",
+        )
+
+    if os.environ.get("ANTHROPIC_API_KEY"):
+        model, analysis = analyze_with_claude(entries)
+    else:
+        model, analysis = PLACEHOLDER_MODEL, placeholder_analysis(entries)
+
     with pool.connection() as conn:
         return conn.execute(
             """
@@ -257,7 +314,7 @@ def analyze(req: AnalyzeRequest | None = None):
                 entries[0]["entry_date"],
                 entries[-1]["entry_date"],
                 len(entries),
-                response.model,
-                Jsonb(response.parsed_output.model_dump()),
+                model,
+                Jsonb(analysis.model_dump()),
             ),
         ).fetchone()

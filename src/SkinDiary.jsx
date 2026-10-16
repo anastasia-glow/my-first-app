@@ -394,6 +394,13 @@ function Analysis({ entryCount }) {
 
       {result && (
         <div className="analysis-result">
+          {analysis.model === 'placeholder' && (
+            <p className="placeholder-banner">
+              <strong>Placeholder results.</strong> These patterns are randomly generated to
+              preview the layout. They are not based on your skin. Real analysis by Claude turns
+              on once an API key is connected.
+            </p>
+          )}
           <p className="muted small">
             Based on {analysis.entry_count} entries, {formatDate(analysis.date_from)} –{' '}
             {formatDate(analysis.date_to)} · analyzed{' '}
