@@ -15,3 +15,5 @@ services:
         value: "24"
       - key: DATABASE_URL
         sync: false # you paste Neon's pooled connection string in the Render dashboard
+      - key: ANTHROPIC_API_KEY
+        sync: false # Claude API key for the skin diary's Analyze button

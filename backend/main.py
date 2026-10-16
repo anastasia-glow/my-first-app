@@ -1,30 +1,12 @@
-import os
 from contextlib import asynccontextmanager
-from pathlib import Path
 from typing import Annotated
 
-from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException
 from fastapi.staticfiles import StaticFiles
-from psycopg.rows import dict_row
-from psycopg_pool import ConnectionPool
 from pydantic import BaseModel, StringConstraints
 
-ROOT = Path(__file__).resolve().parent.parent
-
-# Locally, `neon deploy` writes DATABASE_URL to .env.local. On Render it is set
-# as an environment variable instead, and this does nothing.
-load_dotenv(ROOT / ".env.local")
-
-# DATABASE_URL is Neon's pooled connection (PgBouncer in transaction mode),
-# which doesn't support prepared statements, so they are turned off.
-pool = ConnectionPool(
-    os.environ["DATABASE_URL"],
-    kwargs={"prepare_threshold": None, "row_factory": dict_row},
-    min_size=0,
-    max_size=5,
-    open=False,
-)
+import skin
+from db import ROOT, pool
 
 
 def create_schema(conn):
@@ -65,11 +47,13 @@ async def lifespan(app: FastAPI):
     pool.open()
     with pool.connection() as conn:
         create_schema(conn)
+        skin.create_schema(conn)
     yield
     pool.close()
 
 
 app = FastAPI(title="Anastasiabeauty API", lifespan=lifespan)
+app.include_router(skin.router)
 
 
 class ListCreate(BaseModel):
